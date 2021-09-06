@@ -76,9 +76,7 @@ def dados_recebidos(conexao, dados):
                             servidor.canais[destinatario.upper()][chave].enviar(b':' + conexao.nickid + b' PRIVMSG ' + destinatario + b' ' + conteudo + b'\r\n')
 
                 else: # Mensagem individual
-                    #dest_conexao = next((x for x in servidor.conexoes if x.nickid.upper() == destinatario.upper()), None)
-                    #if dest_conexao:
-                     #   dest_conexao.enviar(b':' + conexao.nickid + b' PRIVMSG ' + dest_conexao.nickid + b' ' + conteudo + b'\r\n')
+                    dest_conexao = None
                     for i in servidor.conexoes:
                         if i.nickid.upper() == destinatario.upper():
                             dest_conexao = i
