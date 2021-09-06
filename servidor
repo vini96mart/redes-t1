@@ -40,79 +40,80 @@ def dados_recebidos(conexao, dados):
         for mensagem in dados:
             comando, texto = mensagem.split(b' ', 1)
             
-                # Passo 1: mensagens de tipo PING
-                if comando.upper() == b'PING':
-                    conexao.enviar(b':server PONG server :' + texto + b'\r\n')
+            # Passo 1: mensagens de tipo PING
+            if comando.upper() == b'PING':
+                conexao.enviar(b':server PONG server :' + texto + b'\r\n')
 
-                # Passo 3 e 4: mensagens de tipo NICK
-                if comando.upper() == b'NICK':
-                    if(validar_nome(texto)): #Verifica nicks usados
-                        if any(i.indnick.upper() == texto.upper() and i != conexao for i in servidor.conexoes):
-                            conexao.enviar(b':server 433 ' + conexao.indnick + b' ' + texto + b' :Nickname is already in use\r\n')
+            # Passo 3 e 4: mensagens de tipo NICK
+            if comando.upper() == b'NICK':
+                if(validar_nome(texto)): #Verifica nicks usados
+                    if any(i.indnick.upper() == texto.upper() and i != conexao for i in servidor.conexoes):
+                        conexao.enviar(b':server 433 ' + conexao.indnick + b' ' + texto + b' :Nickname is already in use\r\n')
 
-                        # validacao de NICK
-                        elif conexao.indnick == b'*':    
-                            conexao.enviar(b':server 001 ' + texto + b' :Welcome\r\n')
-                            conexao.enviar(b':server 422 ' + texto + b' :MOTD File is missing\r\n')
-                            conexao.indnick = texto
+                    # validacao de NICK
+                    elif conexao.indnick == b'*':    
+                        conexao.enviar(b':server 001 ' + texto + b' :Welcome\r\n')
+                        conexao.enviar(b':server 422 ' + texto + b' :MOTD File is missing\r\n')
+                        conexao.indnick = texto
                         
-                        else:
-                            conexao.enviar(b':' + conexao.indnick + b' NICK ' + texto + b'\r\n')
-                            conexao.indnick = texto
-                                                                                                                                                else:
-                            conexao.enviar(b':server 432 ' + conexao.indnick + b' ' + texto + b' :Erroneous nickname\r\n')
-
-                #Passo 5: mensagens de tipo PRIVMSG
-                if comando.upper() == b'PRIVMSG':
-                    destinatario, conteudo = texto.split(b' ', 1)
-                    if destinatario.startswith(b'#') and destinatario.upper() in servidor.canais.keys():
-                        for chave in servidor.canais[destinatario.upper()]:
-                            if servidor.canais[destinatario.upper()][chave] != conexao:
-                                servidor.canais[destinatario.upper()][chave].enviar(b':' + conexao.indnick + b' PRIVMSG ' + destinatario + b' ' + conteudo + b'\r\n')
-
                     else:
-                        dest_conexao = next((x for x in servidor.conexoes if x.indnick.upper() == destinatario.upper()), None)
-                        if dest_conexao:
-                            dest_conexao.enviar(b':' + conexao.indnick + b' PRIVMSG ' + dest_conexao.indnick + b' ' + conteudo + b'\r\n')
+                        conexao.enviar(b':' + conexao.indnick + b' NICK ' + texto + b'\r\n')
+                        conexao.indnick = texto
+                else:
+                    conexao.enviar(b':server 432 ' + conexao.indnick + b' ' + texto + b' :Erroneous nickname\r\n')
 
-                # Passo 6: mensagens do tipo JOIN
-                if comando.upper() == b'JOIN':
-                    if texto.startswith(b'#') and validar_nome(texto[1:]):
-                        if texto.upper() not in servidor.canais.keys():
-                            servidor.canais[texto.upper()] = {}
-                        servidor.canais[texto.upper()][conexao.indnick] = conexao
+            # Passo 5: mensagens de tipo PRIVMSG
+            if comando.upper() == b'PRIVMSG':
+                destinatario, conteudo = texto.split(b' ', 1)
+                if destinatario.startswith(b'#') and destinatario.upper() in servidor.canais.keys():
+                    for chave in servidor.canais[destinatario.upper()]:
+                        if servidor.canais[destinatario.upper()][chave] != conexao:
+                            servidor.canais[destinatario.upper()][chave].enviar(b':' + conexao.indnick + b' PRIVMSG ' + destinatario + b' ' + conteudo + b'\r\n')
+
+                else:
+                    dest_conexao = next((x for x in servidor.conexoes if x.indnick.upper() == destinatario.upper()), None)
+                    if dest_conexao:
+                        dest_conexao.enviar(b':' + conexao.indnick + b' PRIVMSG ' + dest_conexao.indnick + b' ' + conteudo + b'\r\n')
+
+            # Passo 6: mensagens do tipo JOIN
+            if comando.upper() == b'JOIN':
+                if texto.startswith(b'#') and validar_nome(texto[1:]):
+                    if texto.upper() not in servidor.canais.keys():
+                        servidor.canais[texto.upper()] = {}
+                    servidor.canais[texto.upper()][conexao.indnick] = conexao
+                    
+                    if texto.upper() not in conexao.canais:
+                        conexao.canais.append(texto.upper())
+                    member_list = b''    
+                    
+                    for chave in servidor.canais[texto.upper()]:
+                        servidor.canais[texto.upper()][chave].enviar(b':' + conexao.indnick + b' JOIN :' + texto + b'\r\n')
                         
-                        if texto.upper() not in conexao.canais:
-                            conexao.canais.append(texto.upper())
-                                                                                                                                                        member_list = b''    
-                        for chave in servidor.canais[texto.upper()]:
-                            servidor.canais[texto.upper()][chave].enviar(b':' + conexao.indnick + b' JOIN :' + texto + b'\r\n')
-                        
-                        for chave in sorted(servidor.canais[texto.upper()].keys()): 
-                            member_list += chave + b' '
-                                                                                                                                                        send = b':server 353 ' + conexao.indnick + b' = ' + texto + b' :' + member_list[:-1]
-                        while len(send) > 508:
-                            restante = send[:508]
-                            conexao.enviar(send + b'\r\n')
-                            send = restante
-                        
+                    for chave in sorted(servidor.canais[texto.upper()].keys()): 
+                        member_list += chave + b' '
+                    send = b':server 353 ' + conexao.indnick + b' = ' + texto + b' :' + member_list[:-1]
+                    while len(send) > 508:
+                        restante = send[:508]
                         conexao.enviar(send + b'\r\n')
-                        conexao.enviar(b':server 366 ' + conexao.indnick + b' ' + texto + b' :End of /NAMES list.\r\n')
+                        send = restante
                         
-                    else:
-                        conexao.enviar(b':server 403 ' + texto + b' :No such channel.\r\n')
+                    conexao.enviar(send + b'\r\n')
+                    conexao.enviar(b':server 366 ' + conexao.indnick + b' ' + texto + b' :End of /NAMES list.\r\n')
+                        
+                else:
+                    conexao.enviar(b':server 403 ' + texto + b' :No such channel.\r\n')
 
-                # Passo 7: mensagens do tipo PART
-                if comando.upper() == b'PART':
-                    texto = texto.split(b' ')[0]
-                    if texto.upper() in servidor.canais.keys():
-                        if conexao.indnick in servidor.canais[texto.upper()].keys():
-                            for chave in servidor.canais[texto.upper()]:
-                                servidor.canais[texto.upper()][chave].enviar(b':' + conexao.indnick + b' PART ' + texto + b'\r\n')
-                            del servidor.canais[texto.upper()][conexao.indnick]
-                            conexao.canais.remove(texto.upper())
+            # Passo 7: mensagens do tipo PART
+            if comando.upper() == b'PART':
+                texto = texto.split(b' ')[0]
+                if texto.upper() in servidor.canais.keys():
+                    if conexao.indnick in servidor.canais[texto.upper()].keys():
+                        for chave in servidor.canais[texto.upper()]:
+                            servidor.canais[texto.upper()][chave].enviar(b':' + conexao.indnick + b' PART ' + texto + b'\r\n')
+                        del servidor.canais[texto.upper()][conexao.indnick]
+                        conexao.canais.remove(texto.upper())
                             
-                print(conexao, dados)
+            print(conexao, dados)
                 
 def conexao_aceita(conexao):
     print(conexao, 'nova conexão')
