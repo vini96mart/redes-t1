@@ -48,14 +48,14 @@ def dados_recebidos(conexao, dados):
             # Passos 3 e 4: mensagens de tipo NICK
             if comando.upper() == b'NICK':
                 if(validar_nome(texto)): #Verifica nicks usados
-                    jatemigual = 0
+                    nick_usado = 0
                     for i in servidor.conexoes :
                         if i.nickid.upper() == texto.upper() and i != conexao:
-                            jatemigual = 1
+                            nick_usado = 1
                             conexao.enviar(b':server 433 ' + conexao.nickid + b' ' + texto + b' :Nickname is already in use\r\n')
 
                     # validacao do primeiro NICK   
-                    if jatemigual == 0:
+                    if nick_usado == 0:
                         if conexao.nickid == b'*': #primeira escolha de nome, logo primeira conexao
                             conexao.enviar(b':server 001 ' + texto + b' :Welcome\r\n')
                             conexao.enviar(b':server 422 ' + texto + b' :MOTD File is missing\r\n')
