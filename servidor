@@ -11,11 +11,10 @@ def sair(conexao):
     conexao.fechar()
 
 def dados_recebidos(conexao, dados):
-    #### conexao.dados_residuais = b'' ####
     dados = conexao.dados_residuais + dados
     conexao.dados_residuais = b''
     
-    # Passo 2: tratar dados
+    # Passos 8 e 10: mensagens QUIT
     if dados == b'':
         temp_list = []
         for canal in conexao.canais:
@@ -27,7 +26,8 @@ def dados_recebidos(conexao, dados):
             item.enviar(b':' + conexao.indnick + b' QUIT :Connection closed\r\n')
         servidor.conexoes.remove(conexao)
         return sair(conexao)
-
+    
+    # Passo 2: tratar dados
     if not dados.endswith(b'\r\n'):
         dados = dados.split(b'\r\n')
         dados = list(filter((b'').__ne__, dados))
@@ -45,7 +45,7 @@ def dados_recebidos(conexao, dados):
             if comando.upper() == b'PING':
                 conexao.enviar(b':server PONG server :' + texto + b'\r\n')
 
-            # Passo 3 e 4: mensagens de tipo NICK
+            # Passos 3 e 4: mensagens de tipo NICK
             if comando.upper() == b'NICK':
                 if(validar_nome(texto)): #Verifica nicks usados
                     if any(i.indnick.upper() == texto.upper() and i != conexao for i in servidor.conexoes):
@@ -89,7 +89,8 @@ def dados_recebidos(conexao, dados):
                     
                     for chave in servidor.canais[texto.upper()]:
                         servidor.canais[texto.upper()][chave].enviar(b':' + conexao.indnick + b' JOIN :' + texto + b'\r\n')
-                        
+                    
+                    # Passo 9: lista de membros
                     for chave in sorted(servidor.canais[texto.upper()].keys()): 
                         member_list += chave + b' '
                     send = b':server 353 ' + conexao.indnick + b' = ' + texto + b' :' + member_list[:-1]
@@ -118,9 +119,14 @@ def dados_recebidos(conexao, dados):
                 
 def conexao_aceita(conexao):
     print(conexao, 'nova conexão')
+    conexao.indnick = b'*'
+    conexao.dados_residuais = b''
+    conexao.canais = []
+    servidor.conexoes.append(conexao)
     conexao.registrar_recebedor(dados_recebidos)
 
-
+    
+# Execução do servidor    
 servidor = Servidor(6667)
 servidor.canais = {}
 servidor.conexoes = []
