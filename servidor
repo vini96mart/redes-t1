@@ -92,7 +92,7 @@ def dados_recebidos(conexao, dados):
                     
                     if texto.upper() not in conexao.canais:
                         conexao.canais.append(texto.upper())
-                     membros = b''    
+                    membros = b''    
                     
                     for chave in servidor.canais[texto.upper()]:
                         servidor.canais[texto.upper()][chave].enviar(b':' + conexao.nickid + b' JOIN :' + texto + b'\r\n')
