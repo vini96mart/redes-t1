@@ -11,6 +11,7 @@ def sair(conexao):
     conexao.fechar()
 
 def dados_recebidos(conexao, dados):
+    conexao.dados_residuais = b'' ####
     dados = conexao.dados_residuais + dados
     conexao.dados_residuais = b''
     
