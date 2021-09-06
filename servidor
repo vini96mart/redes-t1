@@ -92,17 +92,17 @@ def dados_recebidos(conexao, dados):
                     
                     if texto.upper() not in conexao.canais:
                         conexao.canais.append(texto.upper())
-                    member_list = b''    
+                     membros = b''    
                     
                     for chave in servidor.canais[texto.upper()]:
                         servidor.canais[texto.upper()][chave].enviar(b':' + conexao.nickid + b' JOIN :' + texto + b'\r\n')
                     
                     # Passo 9: lista de membros
                     for chave in sorted(servidor.canais[texto.upper()].keys()): 
-                        member_list += chave + b' '
-                    send = b':server 353 ' + conexao.nickid + b' = ' + texto + b' :' + member_list[:-1]
-                    while len(send) > 508:
-                        restante = send[:508]
+                        membros += chave + b' '
+                    send = b':server 353 ' + conexao.nickid + b' = ' + texto + b' :' + membros
+                    while len(send) > 510:
+                        restante = send[:510]
                         conexao.enviar(send + b'\r\n')
                         send = restante
                         
