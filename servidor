@@ -43,7 +43,6 @@ def dados_recebidos(conexao, dados):
                 # Passo 1: mensagens de tipo PING
                 if comando.upper() == b'PING':
                     conexao.enviar(b':server PONG server :' + texto + b'\r\n')
-                print(conexao, dados)
 
                 # Passo 3 e 4: mensagens de tipo NICK
                 if comando.upper() == b'NICK':
@@ -112,7 +111,9 @@ def dados_recebidos(conexao, dados):
                                 servidor.canais[texto.upper()][chave].enviar(b':' + conexao.indnick + b' PART ' + texto + b'\r\n')
                             del servidor.canais[texto.upper()][conexao.indnick]
                             conexao.canais.remove(texto.upper())
-    
+                            
+                print(conexao, dados)
+                
 def conexao_aceita(conexao):
     print(conexao, 'nova conexão')
     conexao.registrar_recebedor(dados_recebidos)
