@@ -58,7 +58,7 @@ def dados_recebidos(conexao, dados):
                     # validacao do primeiro NICK
                     #elif conexao.nickid == b'*':    
                     if jatemigual == 0:
-                        if conexao.nickid == b'*' #primeira escolha de nome, logo primeira conexao
+                        if conexao.nickid == b'*': #primeira escolha de nome, logo primeira conexao
                             conexao.enviar(b':server 001 ' + texto + b' :Welcome\r\n')
                             conexao.enviar(b':server 422 ' + texto + b' :MOTD File is missing\r\n')
                             conexao.nickid = texto
