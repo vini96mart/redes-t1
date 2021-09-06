@@ -48,25 +48,23 @@ def dados_recebidos(conexao, dados):
             # Passos 3 e 4: mensagens de tipo NICK
             if comando.upper() == b'NICK':
                 if(validar_nome(texto)): #Verifica nicks usados
-                    #if any(i.nickid.upper() == texto.upper() and i != conexao for i in servidor.conexoes):
                     jatemigual = 0
                     for i in servidor.conexoes :
                         if i.nickid.upper() == texto.upper() and i != conexao:
                             jatemigual = 1
                             conexao.enviar(b':server 433 ' + conexao.nickid + b' ' + texto + b' :Nickname is already in use\r\n')
 
-                    # validacao do primeiro NICK
-                    #elif conexao.nickid == b'*':    
+                    # validacao do primeiro NICK   
                     if jatemigual == 0:
                         if conexao.nickid == b'*': #primeira escolha de nome, logo primeira conexao
                             conexao.enviar(b':server 001 ' + texto + b' :Welcome\r\n')
                             conexao.enviar(b':server 422 ' + texto + b' :MOTD File is missing\r\n')
                             conexao.nickid = texto
                         
-                        else:
+                        else: # ta trocando de nick
                             conexao.enviar(b':' + conexao.nickid + b' NICK ' + texto + b'\r\n')
                             conexao.nickid = texto
-                else:
+                else: #nao passou na validacao de caractere
                     conexao.enviar(b':server 432 ' + conexao.nickid + b' ' + texto + b' :Erroneous nickname\r\n') # Erro de conexão correta
 
             # Passo 5: mensagens de tipo PRIVMSG
