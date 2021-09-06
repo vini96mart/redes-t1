@@ -15,27 +15,27 @@ def dados_recebidos(conexao, dados):
     dados = conexao.dados_residuais + dados
     conexao.dados_residuais = b''
     
+    # Passo 2: tratar dados
     if dados == b'':
-        #Passo 2: tratar dados
-        for i in range(len(dados)): # Linhas que contem \n
-            if dados[i] == 10:
-                cont_linhas = cont_linhas + 1 
+        temp_list = []
+        for canal in conexao.canais:
+            servidor.canais[canal].pop(conexao.indnick, None)
+            for chave in servidor.canais[canal]:
+                temp_list.append(servidor.canais[canal][chave])
+        temp_list = list(dict.fromkeys(temp_list))
+        for item in temp_list:
+            item.enviar(b':' + conexao.indnick + b' QUIT :Connection closed\r\n')
+        servidor.conexoes.remove(conexao)
+        return sair(conexao)
 
-        d = b'\n'
-        mensagens = dados.split(d) # Separacao em uma lista                                            
-                                        
-        if b'' in mensagens:
-            mensagens.remove(b'') # Limpeza de string vazias na lista
-
-        for i in range(cont_linhas): # Voltando o \n apos o split
-            mensagens[i] = mensagens[i] + d 
-
-        for mensagem in mensagens:  
-            if mensagem[-1] == 10: # Verifica se acabou a linha
-                msg = conexao.dados_residuais + mensagem
-                conexao.dados_residuais = b''
-
-                initial_msg = msg.split(b' ', 1)[0]
+    if not dados.endswith(b'\r\n'):
+        dados = dados.split(b'\r\n')
+        dados = list(filter((b'').__ne__, dados))
+        conexao.dados_residuais += dados.pop(-1)
+    
+    else:
+        dados = dados.split(b'\r\n')
+        dados = list(filter((b'').__ne__, dados))
 
     if dados:
         for mensagem in dados:
