@@ -16,13 +16,13 @@ def dados_recebidos(conexao, dados):
     
     # Passos 8 e 10: mensagens QUIT
     if dados == b'':
-        temp_list = []
+        temp_list = []  # Criando lista de envios de mensagens
         for canal in conexao.canais:
             servidor.canais[canal].pop(conexao.indnick, None)
             for chave in servidor.canais[canal]:
                 temp_list.append(servidor.canais[canal][chave])
-        temp_list = list(dict.fromkeys(temp_list))
-        for item in temp_list:
+        temp_list = list(dict.fromkeys(temp_list)) # Duplicados
+        for item in temp_list: # Envia sinal QUIT e remove a pessoa que esta saindo da conexão
             item.enviar(b':' + conexao.indnick + b' QUIT :Connection closed\r\n')
         servidor.conexoes.remove(conexao)
         return sair(conexao)
@@ -51,7 +51,7 @@ def dados_recebidos(conexao, dados):
                     if any(i.indnick.upper() == texto.upper() and i != conexao for i in servidor.conexoes):
                         conexao.enviar(b':server 433 ' + conexao.indnick + b' ' + texto + b' :Nickname is already in use\r\n')
 
-                    # validacao de NICK
+                    # validacao do primeiro NICK
                     elif conexao.indnick == b'*':    
                         conexao.enviar(b':server 001 ' + texto + b' :Welcome\r\n')
                         conexao.enviar(b':server 422 ' + texto + b' :MOTD File is missing\r\n')
@@ -61,17 +61,17 @@ def dados_recebidos(conexao, dados):
                         conexao.enviar(b':' + conexao.indnick + b' NICK ' + texto + b'\r\n')
                         conexao.indnick = texto
                 else:
-                    conexao.enviar(b':server 432 ' + conexao.indnick + b' ' + texto + b' :Erroneous nickname\r\n')
+                    conexao.enviar(b':server 432 ' + conexao.indnick + b' ' + texto + b' :Erroneous nickname\r\n') # Erro de conexão correta
 
             # Passo 5: mensagens de tipo PRIVMSG
             if comando.upper() == b'PRIVMSG':
                 destinatario, conteudo = texto.split(b' ', 1)
-                if destinatario.startswith(b'#') and destinatario.upper() in servidor.canais.keys():
+                if destinatario.startswith(b'#') and destinatario.upper() in servidor.canais.keys(): # Mensagem em grupo
                     for chave in servidor.canais[destinatario.upper()]:
                         if servidor.canais[destinatario.upper()][chave] != conexao:
                             servidor.canais[destinatario.upper()][chave].enviar(b':' + conexao.indnick + b' PRIVMSG ' + destinatario + b' ' + conteudo + b'\r\n')
 
-                else:
+                else: # Mensagem individual
                     dest_conexao = next((x for x in servidor.conexoes if x.indnick.upper() == destinatario.upper()), None)
                     if dest_conexao:
                         dest_conexao.enviar(b':' + conexao.indnick + b' PRIVMSG ' + dest_conexao.indnick + b' ' + conteudo + b'\r\n')
